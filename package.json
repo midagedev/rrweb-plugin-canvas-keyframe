@@ -1,0 +1,54 @@
+{
+  "name": "rrweb-plugin-canvas-keyframe",
+  "version": "0.1.0",
+  "description": "rrweb record plugin for canvas-only apps (WebGPU/WebGL/wasm): captures a downscaled canvas keyframe only when the app is idle, and emits it as a native rrweb canvas event so the stock Replayer plays it.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs,iife --global-name rrwebPluginCanvasKeyframe --dts --clean",
+    "check-types": "tsc --noEmit",
+    "test": "npm run build && node test/e2e.mjs"
+  },
+  "keywords": [
+    "rrweb",
+    "session-replay",
+    "canvas",
+    "webgpu",
+    "webgl",
+    "wasm"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "rrweb": ">=2.0.0-alpha.11"
+  },
+  "peerDependenciesMeta": {
+    "rrweb": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "playwright": "^1.65.1",
+    "rrweb": "^2.2.2",
+    "rrweb-2-1-6": "npm:rrweb@^2.1.6",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.0"
+  }
+}
