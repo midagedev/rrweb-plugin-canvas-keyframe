@@ -2,10 +2,21 @@
   "name": "rrweb-plugin-canvas-keyframe",
   "version": "0.1.0",
   "description": "rrweb record plugin for canvas-only apps (WebGPU/WebGL/wasm): captures a downscaled canvas keyframe only when the app is idle, and emits it as a native rrweb canvas event so the stock Replayer plays it.",
+  "author": "midagedev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/midagedev/rrweb-plugin-canvas-keyframe.git"
+  },
+  "homepage": "https://github.com/midagedev/rrweb-plugin-canvas-keyframe#readme",
+  "bugs": {
+    "url": "https://github.com/midagedev/rrweb-plugin-canvas-keyframe/issues"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "unpkg": "./dist/index.global.js",
+  "jsdelivr": "./dist/index.global.js",
   "exports": {
     ".": {
       "import": {
@@ -25,7 +36,8 @@
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs,iife --global-name rrwebPluginCanvasKeyframe --dts --clean",
     "check-types": "tsc --noEmit",
-    "test": "npm run build && node test/e2e.mjs"
+    "test": "npm run build && node test/e2e.mjs",
+    "prepublishOnly": "npm test"
   },
   "keywords": [
     "rrweb",

@@ -14,6 +14,14 @@ app's way:
 
 Frames are emitted as native rrweb canvas events, so **replay needs no plugin**.
 
+## Install
+
+```bash
+npm install rrweb-plugin-canvas-keyframe
+```
+
+Without a bundler, `https://unpkg.com/rrweb-plugin-canvas-keyframe` exposes `window.rrwebPluginCanvasKeyframe`.
+
 ## Use
 
 ```ts
@@ -91,7 +99,8 @@ plugin avoids capturing during interaction and computation at all.
 - Tested with rrweb 2.2.2 and 2.1.6, Chrome only.
 - Seeking a `Replayer` that has never played can show an older frame: rrweb decodes all pending canvas frames
   concurrently and the last one to finish wins. Players that start by playing (or call `play()` once) preload the
-  images and are not affected. `COLD=1 npm test` reproduces it.
+  images and are not affected. `COLD=1 npm test` reproduces it
+  ([rrweb#2035](https://github.com/rrweb-io/rrweb/pull/2035) fixes that in rrweb itself).
 - Cross-origin iframes are not covered.
 - The canvas must be part of rrweb's snapshot (not blocked) to get a node id.
 
