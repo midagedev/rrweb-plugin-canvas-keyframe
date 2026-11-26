@@ -15,8 +15,6 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "unpkg": "./dist/index.global.js",
-  "jsdelivr": "./dist/index.global.js",
   "exports": {
     ".": {
       "import": {
@@ -36,8 +34,7 @@
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs,iife --global-name rrwebPluginCanvasKeyframe --dts --clean",
     "check-types": "tsc --noEmit",
-    "test": "npm run build && node test/e2e.mjs",
-    "prepublishOnly": "npm test"
+    "test": "npm run build && node test/e2e.mjs"
   },
   "keywords": [
     "rrweb",
@@ -62,5 +59,6 @@
     "rrweb-2-1-6": "npm:rrweb@^2.1.6",
     "tsup": "^8.3.0",
     "typescript": "^5.6.0"
-  }
+  },
+  "private": true
 }

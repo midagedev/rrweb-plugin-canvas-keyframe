@@ -16,11 +16,15 @@ Frames are emitted as native rrweb canvas events, so **replay needs no plugin**.
 
 ## Install
 
+Not published to npm. Install from this repository at a tag — `dist` is committed, so nothing is built on install:
+
 ```bash
-npm install rrweb-plugin-canvas-keyframe
+pnpm add github:midagedev/rrweb-plugin-canvas-keyframe#v0.1.0
+# npm install github:midagedev/rrweb-plugin-canvas-keyframe#v0.1.0
 ```
 
-Without a bundler, `https://unpkg.com/rrweb-plugin-canvas-keyframe` exposes `window.rrwebPluginCanvasKeyframe`.
+Without a bundler, `https://cdn.jsdelivr.net/gh/midagedev/rrweb-plugin-canvas-keyframe@v0.1.0/dist/index.global.js`
+exposes `window.rrwebPluginCanvasKeyframe`.
 
 ## Use
 
@@ -111,6 +115,9 @@ npm install
 npm test                               # builds, then records and replays a WebGPU scene in Chrome
 RRWEB_PACKAGE=rrweb-2-1-6 npm test     # same against rrweb 2.1.6
 ```
+
+`dist` is committed because installs come straight from git. `npm test` rebuilds it; commit the result with the
+source change.
 
 The test records a WebGPU canvas (top-level and inside an iframe), checks that exactly the expected frames are
 captured — including none while busy — then replays and seeks forwards, backwards and forwards again.
