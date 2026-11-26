@@ -1,6 +1,6 @@
 {
   "name": "rrweb-plugin-canvas-keyframe",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "rrweb record plugin for canvas-only apps (WebGPU/WebGL/wasm): captures a downscaled canvas keyframe only when the app is idle, and emits it as a native rrweb canvas event so the stock Replayer plays it.",
   "author": "midagedev",
   "repository": {

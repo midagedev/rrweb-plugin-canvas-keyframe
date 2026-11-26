@@ -39,7 +39,10 @@ export interface CanvasKeyframeOptions {
   minIntervalMs?: number;
   /** Capture at this interval even without input; identical frames are dropped. `false` disables. Default 60000. */
   heartbeatMs?: number | false;
-  /** Input events (listened on the window, capture phase) that count as interaction. */
+  /**
+   * Input events (listened on the window, capture phase) that count as interaction. A pressed pointer
+   * (`pointerdown` until `pointerup`/`pointercancel`) always counts, so a long drag is never captured midway.
+   */
   inputEvents?: string[];
   /** Requests made with `requestCanvasKeyframe` within this window collapse into the last one. Default 500. */
   requestCoalesceMs?: number;
@@ -68,7 +71,7 @@ const DEFAULTS: ResolvedOptions = {
   settleMs: 2_000,
   minIntervalMs: 10_000,
   heartbeatMs: 60_000,
-  inputEvents: ['pointerup', 'wheel', 'keyup'],
+  inputEvents: ['pointerup', 'wheel', 'keydown', 'keyup'],
   requestCoalesceMs: 500,
   isBusy: undefined,
   useWorker: true,
@@ -206,6 +209,8 @@ export function getRecordCanvasKeyframePlugin(userOptions: CanvasKeyframeOptions
     let stopped = false;
     let capturing = false;
     let lastInputCaptureAt = Number.NEGATIVE_INFINITY;
+    let lastInputAt = Number.NEGATIVE_INFINITY;
+    let pressed = false;
     let settleTimer: ReturnType<typeof setTimeout> | undefined;
     let requestTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -251,8 +256,22 @@ export function getRecordCanvasKeyframePlugin(userOptions: CanvasKeyframeOptions
       else settleTimer = setTimeout(captureSettled, wait);
     };
     const onInput = (): void => {
+      lastInputAt = Date.now();
       clearTimeout(settleTimer);
-      settleTimer = setTimeout(onSettle, options.settleMs);
+      settleTimer = pressed ? undefined : setTimeout(onSettle, options.settleMs);
+    };
+    const onPress = (): void => {
+      pressed = true;
+      onInput();
+    };
+    const onRelease = (): void => {
+      pressed = false;
+      onInput();
+    };
+    // The user is mid-gesture: a heartbeat now would read the canvas while the app is busiest.
+    const onHeartbeat = (): void => {
+      if (pressed || Date.now() - lastInputAt < options.settleMs) return;
+      capture('heartbeat');
     };
     const onRequest = (event: Event): void => {
       const detail: unknown = 'detail' in event ? event.detail : undefined;
@@ -274,11 +293,14 @@ export function getRecordCanvasKeyframePlugin(userOptions: CanvasKeyframeOptions
 
     const listenerOptions = { passive: true, capture: true };
     options.inputEvents.forEach((type) => win.addEventListener(type, onInput, listenerOptions));
+    win.addEventListener('pointerdown', onPress, listenerOptions);
+    win.addEventListener('pointerup', onRelease, listenerOptions);
+    win.addEventListener('pointercancel', onRelease, listenerOptions);
     win.addEventListener(REQUEST_EVENT, onRequest);
     win.addEventListener(BUSY_EVENT, onBusy);
     fullSnapshotListeners.add(onFullSnapshot);
     const heartbeat =
-      options.heartbeatMs === false ? undefined : setInterval(() => capture('heartbeat'), options.heartbeatMs);
+      options.heartbeatMs === false ? undefined : setInterval(onHeartbeat, options.heartbeatMs);
     capture('init');
 
     return () => {
@@ -287,6 +309,9 @@ export function getRecordCanvasKeyframePlugin(userOptions: CanvasKeyframeOptions
       clearTimeout(requestTimer);
       clearInterval(heartbeat);
       options.inputEvents.forEach((type) => win.removeEventListener(type, onInput, listenerOptions));
+      win.removeEventListener('pointerdown', onPress, listenerOptions);
+      win.removeEventListener('pointerup', onRelease, listenerOptions);
+      win.removeEventListener('pointercancel', onRelease, listenerOptions);
       win.removeEventListener(REQUEST_EVENT, onRequest);
       win.removeEventListener(BUSY_EVENT, onBusy);
       fullSnapshotListeners.delete(onFullSnapshot);

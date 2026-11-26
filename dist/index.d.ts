@@ -25,7 +25,10 @@ interface CanvasKeyframeOptions {
     minIntervalMs?: number;
     /** Capture at this interval even without input; identical frames are dropped. `false` disables. Default 60000. */
     heartbeatMs?: number | false;
-    /** Input events (listened on the window, capture phase) that count as interaction. */
+    /**
+     * Input events (listened on the window, capture phase) that count as interaction. A pressed pointer
+     * (`pointerdown` until `pointerup`/`pointercancel`) always counts, so a long drag is never captured midway.
+     */
     inputEvents?: string[];
     /** Requests made with `requestCanvasKeyframe` within this window collapse into the last one. Default 500. */
     requestCoalesceMs?: number;

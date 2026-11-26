@@ -84,6 +84,17 @@ async function record(mode) {
   await page.waitForTimeout(150);
   await mark('c');
 
+  // A pressed pointer holds every input capture, including one already scheduled, until release.
+  await scene.evaluate(() => window.dispatchEvent(new Event('pointerup')));
+  await page.waitForTimeout(40);
+  await scene.evaluate(() => window.dispatchEvent(new Event('pointerdown')));
+  await scene.evaluate(() => window.setColour('a'));
+  await page.waitForTimeout(900);
+  const whilePressed = await labels();
+  await scene.evaluate(() => window.setColour('c'));
+  await scene.evaluate(() => window.dispatchEvent(new Event('pointerup')));
+  await page.waitForTimeout(900); // settles, but the frame is unchanged and is dropped
+
   // Busy: neither a request nor settled input may read the canvas.
   await page.evaluate(() => rrwebPluginCanvasKeyframe.setCanvasKeyframeBusy(true, window.sceneWindow()));
   await scene.evaluate(() => window.setColour('d'));
@@ -99,7 +110,7 @@ async function record(mode) {
 
   const events = await page.evaluate(() => window.events);
   await page.close();
-  return { events, marks, duringBusy, errors };
+  return { events, marks, duringBusy, whilePressed, errors };
 }
 
 async function replay(events, marks) {
@@ -170,6 +181,7 @@ for (const mode of ['top', 'iframe']) {
   try {
     assert.deepEqual(recorded.errors, []);
     assert.deepEqual(labels, ['init', 'colour-b', 'input:settled', 'colour-d']);
+    assert.deepEqual(recorded.whilePressed, ['init', 'colour-b', 'input:settled'], 'nothing is captured while pressed');
     assert.deepEqual(recorded.duringBusy, ['init', 'colour-b', 'input:settled'], 'nothing is captured while busy');
     const seen = await replay(recorded.events, recorded.marks);
     for (const [step, { name, pixel }] of Object.entries(seen)) {

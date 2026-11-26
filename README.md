@@ -6,10 +6,10 @@ WebGPU / WebGL / wasm editors, CAD tools, games. For those apps rrweb's DOM reco
 This plugin stores a downscaled picture of the canvas, but only at moments when reading it will not get in the
 app's way:
 
-- after the user **stops interacting** (input settles), rate-limited — a capture that falls inside the minimum
+- after the user **stops interacting** (input settles; never while a pointer is pressed), rate-limited — a capture that falls inside the minimum
   interval is postponed, not dropped;
 - when the **app asks** (`requestCanvasKeyframe('case loaded')`), with bursts collapsed into one;
-- on a slow **heartbeat**, dropped if the picture did not change;
+- on a slow **heartbeat**, dropped if the picture did not change and skipped while the user is mid-gesture;
 - **never while the app says it is busy** (`setCanvasKeyframeBusy(true)`), and never while the tab is hidden.
 
 Frames are emitted as native rrweb canvas events, so **replay needs no plugin**.
@@ -19,11 +19,11 @@ Frames are emitted as native rrweb canvas events, so **replay needs no plugin**.
 Not published to npm. Install from this repository at a tag — `dist` is committed, so nothing is built on install:
 
 ```bash
-pnpm add github:midagedev/rrweb-plugin-canvas-keyframe#v0.1.0
-# npm install github:midagedev/rrweb-plugin-canvas-keyframe#v0.1.0
+pnpm add github:midagedev/rrweb-plugin-canvas-keyframe#v0.2.0
+# npm install github:midagedev/rrweb-plugin-canvas-keyframe#v0.2.0
 ```
 
-Without a bundler, `https://cdn.jsdelivr.net/gh/midagedev/rrweb-plugin-canvas-keyframe@v0.1.0/dist/index.global.js`
+Without a bundler, `https://cdn.jsdelivr.net/gh/midagedev/rrweb-plugin-canvas-keyframe@v0.2.0/dist/index.global.js`
 exposes `window.rrwebPluginCanvasKeyframe`.
 
 ## Use
@@ -67,7 +67,7 @@ or the label you passed).
 | `settleMs` | `2000` | capture this long after the last input event |
 | `minIntervalMs` | `10000` | minimum time between input-triggered captures |
 | `heartbeatMs` | `60000` | `false` to disable |
-| `inputEvents` | `pointerup`, `wheel`, `keyup` | listened on the window, capture phase |
+| `inputEvents` | `pointerup`, `wheel`, `keydown`, `keyup` | listened on the window, capture phase; a pressed pointer always holds captures |
 | `requestCoalesceMs` | `500` | requests within this window collapse into the last |
 | `isBusy` | — | extra check called right before a canvas is read |
 | `useWorker` | `true` | encode in a worker; falls back to the main thread (e.g. CSP blocks blob workers) |

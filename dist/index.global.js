@@ -42,7 +42,7 @@ var rrwebPluginCanvasKeyframe = (() => {
     settleMs: 2e3,
     minIntervalMs: 1e4,
     heartbeatMs: 6e4,
-    inputEvents: ["pointerup", "wheel", "keyup"],
+    inputEvents: ["pointerup", "wheel", "keydown", "keyup"],
     requestCoalesceMs: 500,
     isBusy: void 0,
     useWorker: true
@@ -147,6 +147,8 @@ var rrwebPluginCanvasKeyframe = (() => {
       let stopped = false;
       let capturing = false;
       let lastInputCaptureAt = Number.NEGATIVE_INFINITY;
+      let lastInputAt = Number.NEGATIVE_INFINITY;
+      let pressed = false;
       let settleTimer;
       let requestTimer;
       const readCanvas = async (canvas, label) => {
@@ -186,8 +188,21 @@ var rrwebPluginCanvasKeyframe = (() => {
         else settleTimer = setTimeout(captureSettled, wait);
       };
       const onInput = () => {
+        lastInputAt = Date.now();
         clearTimeout(settleTimer);
-        settleTimer = setTimeout(onSettle, options.settleMs);
+        settleTimer = pressed ? void 0 : setTimeout(onSettle, options.settleMs);
+      };
+      const onPress = () => {
+        pressed = true;
+        onInput();
+      };
+      const onRelease = () => {
+        pressed = false;
+        onInput();
+      };
+      const onHeartbeat = () => {
+        if (pressed || Date.now() - lastInputAt < options.settleMs) return;
+        capture("heartbeat");
       };
       const onRequest = (event) => {
         const detail = "detail" in event ? event.detail : void 0;
@@ -204,10 +219,13 @@ var rrwebPluginCanvasKeyframe = (() => {
       };
       const listenerOptions = { passive: true, capture: true };
       options.inputEvents.forEach((type) => win.addEventListener(type, onInput, listenerOptions));
+      win.addEventListener("pointerdown", onPress, listenerOptions);
+      win.addEventListener("pointerup", onRelease, listenerOptions);
+      win.addEventListener("pointercancel", onRelease, listenerOptions);
       win.addEventListener(REQUEST_EVENT, onRequest);
       win.addEventListener(BUSY_EVENT, onBusy);
       fullSnapshotListeners.add(onFullSnapshot);
-      const heartbeat = options.heartbeatMs === false ? void 0 : setInterval(() => capture("heartbeat"), options.heartbeatMs);
+      const heartbeat = options.heartbeatMs === false ? void 0 : setInterval(onHeartbeat, options.heartbeatMs);
       capture("init");
       return () => {
         stopped = true;
@@ -215,6 +233,9 @@ var rrwebPluginCanvasKeyframe = (() => {
         clearTimeout(requestTimer);
         clearInterval(heartbeat);
         options.inputEvents.forEach((type) => win.removeEventListener(type, onInput, listenerOptions));
+        win.removeEventListener("pointerdown", onPress, listenerOptions);
+        win.removeEventListener("pointerup", onRelease, listenerOptions);
+        win.removeEventListener("pointercancel", onRelease, listenerOptions);
         win.removeEventListener(REQUEST_EVENT, onRequest);
         win.removeEventListener(BUSY_EVENT, onBusy);
         fullSnapshotListeners.delete(onFullSnapshot);
